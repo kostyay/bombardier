@@ -55,7 +55,7 @@ const (
 {{ end -}}
 {{ with .Result -}}
 {{ "  HTTP codes:" }}
-{{ printf "    1xx - %v, 2xx - %v, 3xx - %v, 4xx - %v, 5xx - %v" .Req1XX .Req2XX .Req3XX .Req4XX .Req5XX }}
+{{ printf "    1xx - %v, 2xx - %v, 3xx - %v, 4xx - %v, 5xx - %v, 502 - %v" .Req1XX .Req2XX .Req3XX .Req4XX .Req5XX, .Req502 }}
 	{{- printf "\n    others - %v" .Others }}
 	{{- with .Errors }}
 		{{- "\n  Errors:"}}
@@ -127,6 +127,7 @@ const (
 ,"req3xx":{{ .Req3XX -}}
 ,"req4xx":{{ .Req4XX -}}
 ,"req5xx":{{ .Req5XX -}}
+,"req502":{{ .Req502 -}}
 ,"others":{{ .Others -}}
 
 {{- with .Errors -}}

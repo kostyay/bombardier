@@ -12,11 +12,12 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/codesenberg/bombardier/internal"
+	"github.com/kostyay/bombardier/internal"
 
 	"github.com/cheggaaa/pb"
 	fhist "github.com/codesenberg/concurrent/float64/histogram"
 	uhist "github.com/codesenberg/concurrent/uint64/histogram"
+
 	"github.com/satori/go.uuid"
 )
 
@@ -29,6 +30,7 @@ type bombardier struct {
 	req3xx uint64
 	req4xx uint64
 	req5xx uint64
+	req502 uint64
 	others uint64
 
 	conf        config
@@ -244,6 +246,11 @@ func (b *bombardier) writeStatistics(
 	default:
 		counter = &b.others
 	}
+
+	if code == 502 {
+		atomic.AddUint64(&b.req502, 1)
+	}
+
 	atomic.AddUint64(counter, 1)
 }
 
@@ -386,6 +393,7 @@ func (b *bombardier) gatherInfo() internal.TestInfo {
 			Req3XX: b.req3xx,
 			Req4XX: b.req4xx,
 			Req5XX: b.req5xx,
+			Req502: b.req502,
 			Others: b.others,
 
 			Latencies: b.latencies,

@@ -78,8 +78,8 @@ type Results struct {
 	BytesRead, BytesWritten int64
 	TimeTaken               time.Duration
 
-	Req1XX, Req2XX, Req3XX, Req4XX, Req5XX uint64
-	Others                                 uint64
+	Req1XX, Req2XX, Req3XX, Req4XX, Req5XX, Req502 uint64
+	Others                                         uint64
 
 	Errors []ErrorWithCount
 
