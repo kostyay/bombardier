@@ -33,6 +33,9 @@ type bombardier struct {
 	req502 uint64
 	others uint64
 
+	statusCodesMutex sync.Mutex
+	statusCodes map[int]uint64
+
 	conf        config
 	barrier     completionBarrier
 	ratelimiter limiter
@@ -69,6 +72,7 @@ func newBombardier(c config) (*bombardier, error) {
 	b.conf = c
 	b.latencies = uhist.Default()
 	b.requests = fhist.Default()
+	b.statusCodes = make(map[int]uint64)
 
 	if b.conf.testType() == counted {
 		b.bar = pb.New64(int64(*b.conf.numReqs))
@@ -251,6 +255,18 @@ func (b *bombardier) writeStatistics(
 		atomic.AddUint64(&b.req502, 1)
 	}
 
+	b.statusCodesMutex.Lock()
+
+	_, exists := b.statusCodes[code]
+	if !exists {
+		b.statusCodes[code] = 1
+	} else {
+		b.statusCodes[code] += 1
+	}
+
+    b.statusCodesMutex.Unlock()
+
+
 	atomic.AddUint64(counter, 1)
 }
 
@@ -395,6 +411,7 @@ func (b *bombardier) gatherInfo() internal.TestInfo {
 			Req5XX: b.req5xx,
 			Req502: b.req502,
 			Others: b.others,
+			StatusCodes: b.statusCodes,
 
 			Latencies: b.latencies,
 			Requests:  b.requests,
