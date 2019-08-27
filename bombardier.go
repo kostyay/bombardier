@@ -12,11 +12,12 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/codesenberg/bombardier/internal"
+	"github.com/kostyay/bombardier/internal"
 
 	"github.com/cheggaaa/pb"
 	fhist "github.com/codesenberg/concurrent/float64/histogram"
 	uhist "github.com/codesenberg/concurrent/uint64/histogram"
+
 	"github.com/satori/go.uuid"
 )
 
@@ -29,7 +30,11 @@ type bombardier struct {
 	req3xx uint64
 	req4xx uint64
 	req5xx uint64
+	req502 uint64
 	others uint64
+
+	statusCodesMutex sync.Mutex
+	statusCodes map[int]uint64
 
 	conf        config
 	barrier     completionBarrier
@@ -67,6 +72,7 @@ func newBombardier(c config) (*bombardier, error) {
 	b.conf = c
 	b.latencies = uhist.Default()
 	b.requests = fhist.Default()
+	b.statusCodes = make(map[int]uint64)
 
 	if b.conf.testType() == counted {
 		b.bar = pb.New64(int64(*b.conf.numReqs))
@@ -244,6 +250,23 @@ func (b *bombardier) writeStatistics(
 	default:
 		counter = &b.others
 	}
+
+	if code == 502 {
+		atomic.AddUint64(&b.req502, 1)
+	}
+
+	b.statusCodesMutex.Lock()
+
+	_, exists := b.statusCodes[code]
+	if !exists {
+		b.statusCodes[code] = 1
+	} else {
+		b.statusCodes[code] += 1
+	}
+
+    b.statusCodesMutex.Unlock()
+
+
 	atomic.AddUint64(counter, 1)
 }
 
@@ -386,7 +409,9 @@ func (b *bombardier) gatherInfo() internal.TestInfo {
 			Req3XX: b.req3xx,
 			Req4XX: b.req4xx,
 			Req5XX: b.req5xx,
+			Req502: b.req502,
 			Others: b.others,
+			StatusCodes: b.statusCodes,
 
 			Latencies: b.latencies,
 			Requests:  b.requests,

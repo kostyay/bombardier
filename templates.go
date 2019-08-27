@@ -55,13 +55,17 @@ const (
 {{ end -}}
 {{ with .Result -}}
 {{ "  HTTP codes:" }}
-{{ printf "    1xx - %v, 2xx - %v, 3xx - %v, 4xx - %v, 5xx - %v" .Req1XX .Req2XX .Req3XX .Req4XX .Req5XX }}
+{{ printf "    1xx - %v, 2xx - %v, 3xx - %v, 4xx - %v, 5xx - %v, 502 - %v" .Req1XX .Req2XX .Req3XX .Req4XX .Req5XX .Req502 }}
 	{{- printf "\n    others - %v" .Others }}
 	{{- with .Errors }}
 		{{- "\n  Errors:"}}
 		{{- range . }}
 			{{- printf "\n    %10v - %v" .Error .Count }}
 		{{- end -}}
+	{{ end -}}
+	{{ "\n\n  HTTP codes detailed:" }}
+	{{- range $key, $value := .StatusCodes }}
+		{{- printf "\n    %10v - %v" $key $value }}
 	{{ end -}}
 {{ end }}
 {{ printf "  %-10v %10v/s\n" "Throughput:" (FormatBinary .Result.Throughput)}}`
